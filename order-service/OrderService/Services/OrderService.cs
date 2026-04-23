@@ -1,4 +1,5 @@
 ﻿using OrderService.DTOs;
+using OrderService.Messaging;
 using OrderService.Models;
 
 namespace OrderService.Services
@@ -6,10 +7,12 @@ namespace OrderService.Services
     public class OrderService : IOrderService
     {
         private readonly OrderDbContext _context;
+        private readonly IMessagePublisher _publisher;
 
-        public OrderService(OrderDbContext context)
+        public OrderService(OrderDbContext context, IMessagePublisher publisher)
         {
             _context = context;
+            _publisher = publisher;
         }
 
         public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto dto)
@@ -22,6 +25,8 @@ namespace OrderService.Services
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+
+            await _publisher.PublishAsync($"OrderCreated:{order.Id}");
 
             return new OrderResponseDto
             {
