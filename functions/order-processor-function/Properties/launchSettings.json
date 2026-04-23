@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "order_processor_function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7084",
+      "launchBrowser": false
+    }
+  }
+}
