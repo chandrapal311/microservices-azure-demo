@@ -14,6 +14,7 @@ namespace OrderService.Models
         }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        //public DbSet<ProcessedOrder> ProcessedOrders { get; set; }
 
 
     }

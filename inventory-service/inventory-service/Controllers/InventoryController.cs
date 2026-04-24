@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Contracts;
 
 namespace inventory_service.Controllers
 {
@@ -9,9 +10,9 @@ namespace inventory_service.Controllers
     {
 
         [HttpPost]
-        public IActionResult Update()
+        public IActionResult Update([FromBody] OrderCreatedEvent order)
         {
-            return Ok("Inventory updated");
+            throw new Exception("Inventory failed");
         }
     }
 }

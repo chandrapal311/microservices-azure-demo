@@ -1,6 +1,8 @@
 ﻿using OrderService.DTOs;
 using OrderService.Messaging;
 using OrderService.Models;
+using Shared.Contracts;
+using System.Text.Json;
 
 namespace OrderService.Services
 {
@@ -26,7 +28,16 @@ namespace OrderService.Services
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            await _publisher.PublishAsync($"OrderCreated:{order.Id}");
+
+
+            var orderEvent = new OrderCreatedEvent
+            {
+                OrderId = order.Id,
+                Amount = order.Amount,
+                ProductName = dto.ProductId.ToString()
+            };
+
+            await _publisher.PublishAsync(JsonSerializer.Serialize(orderEvent));
 
             return new OrderResponseDto
             {

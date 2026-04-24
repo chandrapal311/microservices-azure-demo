@@ -15,5 +15,8 @@
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\MicroserviceDemo\microservices-azure-demo\Shared.Contracts\Shared.Contracts.csproj" />
+  </ItemGroup>
 
 </Project>

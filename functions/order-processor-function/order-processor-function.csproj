@@ -18,5 +18,8 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.22.2" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\MicroserviceDemo\microservices-azure-demo\Shared.Contracts\Shared.Contracts.csproj" />
+  </ItemGroup>
 
 </Project>
