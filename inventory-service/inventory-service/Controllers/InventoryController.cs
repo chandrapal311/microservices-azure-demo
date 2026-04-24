@@ -12,7 +12,8 @@ namespace inventory_service.Controllers
         [HttpPost]
         public IActionResult Update([FromBody] OrderCreatedEvent order)
         {
-            throw new Exception("Inventory failed");
+            var correlationId = Request.Headers["x-correlation-id"];
+            return Ok($"Inventory Updated OrderId:{order.OrderId} x-correlation-id:{correlationId}");
         }
     }
 }

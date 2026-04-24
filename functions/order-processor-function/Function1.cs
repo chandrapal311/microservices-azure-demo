@@ -16,7 +16,7 @@ public class Function1
 
     public Function1(IHttpClientFactory factory, ILogger<Function1> logger)
     {
-        _httpClient = factory.CreateClient();
+        _httpClient = factory.CreateClient("ResilientClient");
         _logger = logger;
     }
 
@@ -37,12 +37,23 @@ public class Function1
             orderEvent?.OrderId,
             orderEvent?.Amount);
 
-        var paymentContent = new StringContent(JsonSerializer.Serialize(orderEvent),Encoding.UTF8,"application/json");
+        _logger.LogInformation("Processing Order {id}, CorrelationId: {cid}", orderEvent?.OrderId, orderEvent?.CorrelationId);
+
+        var paymentContent = new StringContent(JsonSerializer.Serialize(orderEvent), Encoding.UTF8, "application/json");
 
         try
         {
+            _httpClient.DefaultRequestHeaders.Add("x-correlation-id", orderEvent?.CorrelationId);
             // Call Payment Service
             var paymentResponse = await _httpClient.PostAsync("https://localhost:7076/api/payment", paymentContent);
+            if (!paymentResponse.IsSuccessStatusCode)
+            {
+                throw new Exception("Payment failed");
+            }
+            else
+            {
+                await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=PaymentCompleted", null);
+            }
 
             _logger.LogInformation("Payment status: {status}", paymentResponse.StatusCode);
 
@@ -51,7 +62,14 @@ public class Function1
 
             var inventoryResponse = await _httpClient.PostAsync("https://localhost:7177/api/inventory", inventoryContent);
             if (!inventoryResponse.IsSuccessStatusCode)
+            {
                 throw new Exception("Inventory failed");
+            }
+            else
+            {
+                await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=Completed", null);
+            }
+
             _logger.LogInformation("Inventory status: {status}", inventoryResponse.StatusCode);
             // Complete the message
             //await messageActions.CompleteMessageAsync(message);
@@ -61,17 +79,18 @@ public class Function1
         {
 
             _logger.LogError(ex, "Error processing order");
-
+            await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=Failed",
+    null);
             // Compensation: Refund payment
-            await _httpClient.PostAsync(
-                "https://localhost:7076/api/payment/refund",
-                paymentContent);
+            await _httpClient.PostAsync("https://localhost:7076/api/payment/refund",paymentContent);
+
+            await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=Refunded", null);
 
             _logger.LogInformation("Payment refunded");
 
             // Retry later
             await messageActions.AbandonMessageAsync(message);
         }
-        
+
     }
 }

@@ -1,4 +1,6 @@
-﻿using OrderService.DTOs;
+﻿using Microsoft.EntityFrameworkCore;
+using OrderService.DTOs;
+using OrderService.Enums;
 using OrderService.Messaging;
 using OrderService.Models;
 using Shared.Contracts;
@@ -26,7 +28,14 @@ namespace OrderService.Services
             };
 
             _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                throw new Exception("Order was modified by another process");
+            }
 
 
 
@@ -34,7 +43,8 @@ namespace OrderService.Services
             {
                 OrderId = order.Id,
                 Amount = order.Amount,
-                ProductName = dto.ProductId.ToString()
+                ProductName = dto.ProductId.ToString(),
+                CorrelationId = Guid.NewGuid().ToString()
             };
 
             await _publisher.PublishAsync(JsonSerializer.Serialize(orderEvent));
@@ -57,6 +67,16 @@ namespace OrderService.Services
                 Amount = o.Amount,
                 Status = o.Status
             }).ToList();
+        }
+
+        public async Task<bool> UpdateStatus(int id, OrderStatus orderStatus)
+        {
+            int rowsAffected = await _context.Orders
+        .Where(o => o.Id == id)
+        .ExecuteUpdateAsync(setters => setters
+            .SetProperty(o => o.Status, orderStatus.ToString()));
+
+            return rowsAffected > 0;
         }
     }
 }

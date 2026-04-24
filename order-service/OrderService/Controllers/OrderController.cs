@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OrderService.DTOs;
+using OrderService.Enums;
 using OrderService.Models;
 using OrderService.Services;
 
@@ -26,6 +28,12 @@ namespace OrderService.Controllers
         public IActionResult GetAll()
         {
             return Ok(_service.GetAll());
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromQuery] OrderStatus status)
+        {            
+            return Ok(await _service.UpdateStatus(id, status));
         }
     }
 }

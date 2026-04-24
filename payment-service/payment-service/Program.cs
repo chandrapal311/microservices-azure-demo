@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<PaymentDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 builder.Services.AddControllers();

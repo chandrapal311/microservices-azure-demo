@@ -8,16 +8,19 @@ namespace payment_service.Services
     public class PaymentService: IPaymentService
     {
        
-
+        private readonly ILogger<PaymentService> _logger;
         private readonly PaymentDbContext _context;
 
-        public PaymentService(PaymentDbContext context)
+        public PaymentService(PaymentDbContext context, ILogger<PaymentService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<string> ProcessAsync(OrderCreatedEvent order)
         {
+            _logger.LogInformation("Payment processing Order {id}, CorrelationId: {cid}",
+    order.OrderId, order.CorrelationId);
             var exists = await _context.ProcessedOrders
                 .AnyAsync(x => x.OrderId == order.OrderId);
 
