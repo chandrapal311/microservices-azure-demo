@@ -6,3 +6,4 @@ obj/
 appsettings.Development.json
 local.settings.json
 /functions/order-processor-function/local.settings.json
+/order-service/OrderService/logs

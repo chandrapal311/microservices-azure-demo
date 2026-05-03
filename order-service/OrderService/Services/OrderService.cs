@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OrderService.Controllers;
 using OrderService.DTOs;
 using OrderService.Enums;
 using OrderService.Messaging;
@@ -10,17 +11,20 @@ namespace OrderService.Services
 {
     public class OrderService : IOrderService
     {
+        private readonly ILogger<OrderService> _logger;
         private readonly OrderDbContext _context;
         private readonly IMessagePublisher _publisher;
 
-        public OrderService(OrderDbContext context, IMessagePublisher publisher)
+        public OrderService(OrderDbContext context, IMessagePublisher publisher, ILogger<OrderService> logger)
         {
             _context = context;
             _publisher = publisher;
+            _logger = logger;
         }
 
         public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto dto)
         {
+            _logger.LogInformation("Creating new order");
             var order = new Order
             {
                 ProductId = dto.ProductId,
@@ -31,6 +35,7 @@ namespace OrderService.Services
             try
             {
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Order saved to DB: {OrderId}", order.Id);
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -38,7 +43,7 @@ namespace OrderService.Services
             }
 
 
-
+            _logger.LogInformation("Sending message to Kafka");
             var orderEvent = new OrderCreatedEvent
             {
                 OrderId = order.Id,
@@ -48,7 +53,7 @@ namespace OrderService.Services
             };
 
             await _publisher.PublishAsync(JsonSerializer.Serialize(orderEvent));
-
+            _logger.LogInformation("Message sent to Kafka");
             return new OrderResponseDto
             {
                 Id = order.Id,
