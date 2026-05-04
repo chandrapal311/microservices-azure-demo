@@ -1,3 +1,4 @@
+using Azure.Messaging.ServiceBus;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Messaging;
 using OrderService.Models;
@@ -15,6 +16,11 @@ builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
 builder.Services.AddScoped<IMessagePublisher, ServiceBusPublisher>();
+builder.Services.AddSingleton<ServiceBusClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new ServiceBusClient(config["ServiceBus:ConnectionString"]);
+});
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();

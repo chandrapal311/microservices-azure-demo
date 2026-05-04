@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure.Messaging.ServiceBus;
+using Microsoft.EntityFrameworkCore;
 using OrderService.Controllers;
 using OrderService.DTOs;
 using OrderService.Enums;
@@ -14,12 +15,14 @@ namespace OrderService.Services
         private readonly ILogger<OrderService> _logger;
         private readonly OrderDbContext _context;
         private readonly IMessagePublisher _publisher;
+        private readonly IConfiguration _config;
 
-        public OrderService(OrderDbContext context, IMessagePublisher publisher, ILogger<OrderService> logger)
+        public OrderService(OrderDbContext context, IMessagePublisher publisher, ILogger<OrderService> logger, IConfiguration config)
         {
             _context = context;
             _publisher = publisher;
             _logger = logger;
+            _config = config;
         }
 
         public async Task<OrderResponseDto> CreateOrderAsync(CreateOrderDto dto)
@@ -43,7 +46,7 @@ namespace OrderService.Services
             }
 
 
-            _logger.LogInformation("Sending message to Kafka");
+            _logger.LogInformation("Sending message to Service Bus Topic");
             var orderEvent = new OrderCreatedEvent
             {
                 OrderId = order.Id,
@@ -52,8 +55,27 @@ namespace OrderService.Services
                 CorrelationId = Guid.NewGuid().ToString()
             };
 
-            await _publisher.PublishAsync(JsonSerializer.Serialize(orderEvent));
-            _logger.LogInformation("Message sent to Kafka");
+            //await _publisher.PublishAsync(JsonSerializer.Serialize(orderEvent));
+
+            var topicName = _config["ServiceBus:TopicName"]??string.Empty; 
+
+            _logger.LogInformation("Using Service Bus: {Conn}",
+    _config["ServiceBus:ConnectionString"]);
+            var message = new ServiceBusMessage(JsonSerializer.Serialize(orderEvent));
+            //message.ApplicationProperties["CorrelationId"] = orderEvent.CorrelationId;
+            message.ApplicationProperties["eventType"] = "OrderCreated";
+            message.ApplicationProperties["CorrelationId"] = orderEvent.CorrelationId;
+            try
+            {
+                await _publisher.PublishAsync(topicName, message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending message");
+                throw;
+            }
+           
+            _logger.LogInformation("Message sent to Service Bus Topic");
             return new OrderResponseDto
             {
                 Id = order.Id,

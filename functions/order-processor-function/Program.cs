@@ -1,5 +1,7 @@
+using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Polly;
@@ -10,6 +12,12 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 builder.Services.AddHttpClient();
+
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new ServiceBusClient(config["ServiceBusConnection"]);
+});
 
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()
