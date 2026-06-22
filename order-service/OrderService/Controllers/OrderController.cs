@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using OrderService.DTOs;
 using OrderService.Enums;
@@ -20,6 +21,7 @@ namespace OrderService.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("default")]
         public async Task<IActionResult> Create(CreateOrderDto dto)
         {
             var result = await _service.CreateOrderAsync(dto);
@@ -28,6 +30,7 @@ namespace OrderService.Controllers
 
         [HttpGet]
         [Authorize]
+        [EnableRateLimiting("default")]
         public IActionResult GetAll()
         {
             return Ok(_service.GetAll());
