@@ -1,0 +1,45 @@
+﻿using Microsoft.EntityFrameworkCore;
+using payment_service.Data;
+using payment_service.Models;
+using Shared.Contracts;
+
+namespace payment_service.Services
+{
+    public class PaymentService: IPaymentService
+    {
+       
+        private readonly ILogger<PaymentService> _logger;
+        private readonly PaymentDbContext _context;
+
+        public PaymentService(PaymentDbContext context, ILogger<PaymentService> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        public async Task<string> ProcessAsync(OrderCreatedEvent order)
+        {
+            _logger.LogInformation("Payment processing Order {id}, CorrelationId: {cid}",
+    order.OrderId, order.CorrelationId);
+            var exists = await _context.ProcessedOrders
+                .AnyAsync(x => x.OrderId == order.OrderId);
+
+            if (exists)
+                return $"Already processed Order {order.OrderId}";
+
+            _context.ProcessedOrders.Add(new ProcessedOrder
+            {
+                OrderId = order.OrderId
+            });
+
+            await _context.SaveChangesAsync();
+
+            return $"Payment done for Order {order.OrderId}";
+        }
+
+        public async Task<string> RefundAsync(OrderCreatedEvent order)
+        {
+            return $"Refund processed for Order {order.OrderId}";
+        }
+    }
+}
