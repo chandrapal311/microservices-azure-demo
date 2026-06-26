@@ -9,6 +9,13 @@
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+    <PackageReference Include="OpenTelemetry.Api" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.SqlClient" Version="1.15.0" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.2.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="D:\MicroserviceDemo\microservices-azure-demo\Shared.Contracts\Shared.Contracts.csproj" />

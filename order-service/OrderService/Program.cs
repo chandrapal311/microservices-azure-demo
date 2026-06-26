@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using OrderService.Messaging;
 using OrderService.Models;
 using OrderService.Services;
+using OrderService.Telemetry;
 using Serilog;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -18,6 +19,10 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+
+// Add OpenTelemetry distributed tracing (feature flag controlled)
+builder.Services.AddCustomTelemetry(builder.Configuration);
+
 builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
 builder.Services.AddScoped<IMessagePublisher, ServiceBusPublisher>();
 builder.Services.AddSingleton<ServiceBusClient>(sp =>

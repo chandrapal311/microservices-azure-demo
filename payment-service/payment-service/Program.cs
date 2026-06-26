@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using payment_service.Data;
 using payment_service.Services;
+using payment_service.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<PaymentDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
+// Add OpenTelemetry distributed tracing (feature flag controlled)
+builder.Services.AddCustomTelemetry(builder.Configuration);
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 

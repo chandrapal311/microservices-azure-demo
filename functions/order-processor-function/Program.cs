@@ -4,6 +4,7 @@ using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using order_processor_function.Telemetry;
 using Polly;
 using Polly.Extensions.Http;
 using System.Net;
@@ -12,6 +13,9 @@ var builder = FunctionsApplication.CreateBuilder(args);
 
 builder.ConfigureFunctionsWebApplication();
 builder.Services.AddHttpClient();
+
+// Add OpenTelemetry distributed tracing (feature flag controlled)
+builder.Services.AddCustomTelemetry((IConfiguration)builder.Configuration);
 
 builder.Services.AddSingleton(sp =>
 {
