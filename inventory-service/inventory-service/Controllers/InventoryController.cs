@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Contracts;
 
@@ -10,6 +11,7 @@ namespace inventory_service.Controllers
     {
 
         [HttpPost]
+        [Authorize(Roles = "Service")]
         public IActionResult Update([FromBody] OrderCreatedEvent order)
         {
             var correlationId = Request.Headers["x-correlation-id"];

@@ -4,9 +4,12 @@ using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using order_processor_function.Clients;
+using order_processor_function.Services;
 using order_processor_function.Telemetry;
 using Polly;
 using Polly.Extensions.Http;
+using RestEase.HttpClientFactory;
 using System.Net;
 
 var builder = FunctionsApplication.CreateBuilder(args);
@@ -22,6 +25,11 @@ builder.Services.AddSingleton(sp =>
     var config = sp.GetRequiredService<IConfiguration>();
     return new ServiceBusClient(config["ServiceBusConnection"]);
 });
+builder.Services.AddSingleton<AuthenticatedApiClient>();
+builder.Services.AddSingleton<TokenProvider>();
+
+builder.Services
+    .AddRestEaseClient<IAuthApi>("https://localhost:7001/");
 
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()

@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using order_processor_function.Services;
 using Shared.Contracts;
 using System;
 using System.Collections.Generic;
@@ -13,14 +14,16 @@ namespace order_processor_function
 {
     public class InventoryProcessor
     {
-        private readonly HttpClient _httpClient;
+        private readonly AuthenticatedApiClient _apiClient;
         private readonly ServiceBusSender _sender;
         private readonly ILogger<InventoryProcessor> _logger;
+        private readonly TokenProvider _tokenProvider;
 
-        public InventoryProcessor(IHttpClientFactory factory, ServiceBusClient client, ILogger<InventoryProcessor> logger)
+        public InventoryProcessor(AuthenticatedApiClient apiClient, ServiceBusClient client, TokenProvider tokenProvider, ILogger<InventoryProcessor> logger)
         {
-            _httpClient = factory.CreateClient("ResilientClient");
+            _apiClient = apiClient;
             _sender = client.CreateSender("order-events");
+            _tokenProvider = tokenProvider;
             _logger = logger;
         }
 
@@ -57,11 +60,11 @@ namespace order_processor_function
             {
                 _logger.LogInformation("Inventory processing Order {id}", orderEvent?.OrderId);
 
-                var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7177/api/inventory");
-                request.Headers.Add("x-correlation-id", correlationId);
-                request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                //var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7177/api/inventory");
+                //request.Headers.Add("x-correlation-id", correlationId);
+                //request.Content = new StringContent(body, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.SendAsync(request);
+                var response = await _apiClient.PostAsync("https://localhost:7177/api/inventory",body,correlationId!);
 
                 if (!response.IsSuccessStatusCode)
                     throw new Exception("Inventory failed");

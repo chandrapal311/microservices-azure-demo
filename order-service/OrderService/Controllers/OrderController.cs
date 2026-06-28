@@ -37,6 +37,7 @@ namespace OrderService.Controllers
         }
 
         [HttpPut("{id}/status")]
+        [Authorize(Roles = "Service")]
         public async Task<IActionResult> UpdateStatus(int id, [FromQuery] OrderStatus status)
         {            
             return Ok(await _service.UpdateStatus(id, status));

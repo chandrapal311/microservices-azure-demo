@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using payment_service.Services;
 using Shared.Contracts;
@@ -19,6 +20,7 @@ namespace payment_service.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Service")]
         public async Task<IActionResult> Process([FromBody] OrderCreatedEvent order)
         {
             var result = await _service.ProcessAsync(order);
@@ -26,6 +28,7 @@ namespace payment_service.Controllers
         }
 
         [HttpPost("refund")]
+        [Authorize(Roles = "Service")]
         public async Task<IActionResult> Refund([FromBody] OrderCreatedEvent order)
         {
             var result = await _service.RefundAsync(order);

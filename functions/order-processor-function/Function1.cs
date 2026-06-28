@@ -1,6 +1,7 @@
 using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using order_processor_function.Services;
 using Shared.Contracts;
 using System;
 using System.Text;
@@ -11,14 +12,14 @@ namespace order_processor_function;
 
 public class Function1
 {
-    private readonly HttpClient _httpClient;
+    private readonly AuthenticatedApiClient _apiClient;
     private readonly ILogger<Function1> _logger;
 
     private readonly ServiceBusSender _sender;
 
-    public Function1(IHttpClientFactory factory, ServiceBusClient client, ILogger<Function1> logger)
+    public Function1(AuthenticatedApiClient apiClient, ServiceBusClient client, ILogger<Function1> logger)
     {
-        _httpClient = factory.CreateClient("ResilientClient");
+        _apiClient = apiClient;
         _sender = client.CreateSender("order-events");
         _logger = logger;
     }
@@ -54,20 +55,24 @@ public class Function1
 
         _logger.LogInformation("Processing Order {id}, CorrelationId: {cid}", orderEvent?.OrderId, orderEvent?.CorrelationId);
 
-        var paymentContent = new StringContent(JsonSerializer.Serialize(orderEvent), Encoding.UTF8, "application/json");
+        var paymentContent = JsonSerializer.Serialize(orderEvent);
 
         try
         {
-            _httpClient.DefaultRequestHeaders.Add("x-correlation-id", orderEvent?.CorrelationId);
+            //_httpClient.DefaultRequestHeaders.Add("x-correlation-id", orderEvent?.CorrelationId);
             // Call Payment Service
-            var paymentResponse = await _httpClient.PostAsync("https://localhost:7076/api/payment", paymentContent);
+            var paymentResponse = await _apiClient.PostAsync("https://localhost:7076/api/payment",
+        body,
+        correlationId!);
             if (!paymentResponse.IsSuccessStatusCode)
             {
                 throw new Exception("Payment failed");
             }
             else
             {
-                await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=PaymentCompleted", null);
+                await _apiClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=PaymentCompleted",
+    correlationId!);
+                //await _apiClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=PaymentCompleted", null);
             }
 
             var nextEvent = new ServiceBusMessage(body);
@@ -86,12 +91,12 @@ public class Function1
         {
 
             _logger.LogError(ex, "Error processing order");
-            await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=Failed",
-    null);
+            await _apiClient.PutAsync($"https://localhost:7083/api/order/{orderEvent?.OrderId}/status?status=Failed",
+    correlationId!);
             // Compensation: Refund payment
-            await _httpClient.PostAsync("https://localhost:7076/api/payment/refund", paymentContent);
+            await _apiClient.PostAsync("https://localhost:7076/api/payment/refund", paymentContent, correlationId!);
 
-            await _httpClient.PutAsync($"https://localhost:7083/api/order/{orderEvent.OrderId}/status?status=Refunded", null);
+            await _apiClient.PutAsync($"https://localhost:7083/api/order/{orderEvent?.OrderId}/status?status=Refunded", correlationId!);
 
             _logger.LogInformation("Payment refunded");
 

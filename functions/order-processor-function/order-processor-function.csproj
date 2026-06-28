@@ -26,6 +26,8 @@
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <PackageReference Include="Azure.Monitor.OpenTelemetry.Exporter" Version="1.2.0" />
+    <PackageReference Include="RestEase.HttpClientFactory" Version="1.6.4" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="D:\MicroserviceDemo\microservices-azure-demo\Shared.Contracts\Shared.Contracts.csproj" />
