@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using order_processor_function.Clients;
 using order_processor_function.Services;
 using Shared.Contracts;
 using System;
@@ -14,13 +15,15 @@ namespace order_processor_function
 {
     public class OrderUpdater
     {
-        private readonly AuthenticatedApiClient _apiClient;
+        private readonly IOrderApi _orderApi;
+        private readonly TokenProvider _tokenProvider;
         private readonly ILogger<OrderUpdater> _logger;
         private readonly ServiceBusSender _sender;
 
-        public OrderUpdater(AuthenticatedApiClient apiClient, ILogger<OrderUpdater> logger, ServiceBusSender sender)
+        public OrderUpdater(IOrderApi orderApi, TokenProvider tokenProvider, ILogger<OrderUpdater> logger, ServiceBusSender sender)
         {
-            _apiClient = apiClient;
+            _orderApi = orderApi;
+            _tokenProvider = tokenProvider;
             _logger = logger;
             _sender = sender;
         }
@@ -50,17 +53,16 @@ namespace order_processor_function
                 _logger.LogInformation("OrderUpdater received {eventType} for Order {id}",
                     eventType, orderEvent?.OrderId);
 
+                var bearerToken = await _tokenProvider.GetBearerTokenAsync();
+
                 if (eventType == "PaymentFailed")
                 {
-                    await _apiClient.PutAsync(
-                        $"https://localhost:7083/api/order/{orderEvent!.OrderId}/status?status=Failed",
-                        correlationId!);
+                    await _orderApi.UpdateStatusAsync(orderEvent!.OrderId, "Failed", bearerToken, correlationId!);
+                    
                 }
                 else if (eventType == "InventoryCompleted")
                 {
-                    await _apiClient.PutAsync(
-                        $"https://localhost:7083/api/order/{orderEvent!.OrderId}/status?status=Completed",
-                        correlationId!);
+                    await _orderApi.UpdateStatusAsync(orderEvent!.OrderId, "Failed", bearerToken, correlationId!);
                 }
                 else if (eventType == "InventoryFailed")
                 {
@@ -70,9 +72,7 @@ namespace order_processor_function
 
                     await _sender.SendMessageAsync(refundEvent);
 
-                    await _apiClient.PutAsync(
-                        $"https://localhost:7083/api/order/{orderEvent!.OrderId}/status?status=Refunded",
-                        correlationId!);
+                    await _orderApi.UpdateStatusAsync(orderEvent!.OrderId, "Refunded", bearerToken, correlationId!);
                 }
 
                 await messageActions.CompleteMessageAsync(message);

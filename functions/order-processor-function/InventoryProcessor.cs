@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
+using order_processor_function.Clients;
 using order_processor_function.Services;
 using Shared.Contracts;
 using System;
@@ -14,16 +15,19 @@ namespace order_processor_function
 {
     public class InventoryProcessor
     {
-        private readonly AuthenticatedApiClient _apiClient;
-        private readonly ServiceBusSender _sender;
-        private readonly ILogger<InventoryProcessor> _logger;
+        private readonly IInventoryApi _inventoryApi;        
         private readonly TokenProvider _tokenProvider;
+        private readonly ILogger<Function1> _logger;
+        private readonly ServiceBusSender _sender;
 
-        public InventoryProcessor(AuthenticatedApiClient apiClient, ServiceBusClient client, TokenProvider tokenProvider, ILogger<InventoryProcessor> logger)
+        public InventoryProcessor(IInventoryApi inventoryApi,        
+        TokenProvider tokenProvider,
+         ServiceBusClient client,
+        ILogger<Function1> logger)
         {
-            _apiClient = apiClient;
-            _sender = client.CreateSender("order-events");
+            _inventoryApi = inventoryApi;            
             _tokenProvider = tokenProvider;
+            _sender = client.CreateSender("order-events");
             _logger = logger;
         }
 
@@ -59,14 +63,12 @@ namespace order_processor_function
             try
             {
                 _logger.LogInformation("Inventory processing Order {id}", orderEvent?.OrderId);
+                var bearerToken = await _tokenProvider.GetBearerTokenAsync();
+               
 
-                //var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:7177/api/inventory");
-                //request.Headers.Add("x-correlation-id", correlationId);
-                //request.Content = new StringContent(body, Encoding.UTF8, "application/json");
+                var response = await _inventoryApi.UpdateAsync(bearerToken,correlationId!,orderEvent!);
 
-                var response = await _apiClient.PostAsync("https://localhost:7177/api/inventory",body,correlationId!);
-
-                if (!response.IsSuccessStatusCode)
+                if (!response.Success)
                     throw new Exception("Inventory failed");
 
                 var nextEvent = new ServiceBusMessage(body);

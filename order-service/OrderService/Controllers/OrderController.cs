@@ -6,6 +6,7 @@ using OrderService.DTOs;
 using OrderService.Enums;
 using OrderService.Models;
 using OrderService.Services;
+using Shared.Contracts.Responses;
 
 namespace OrderService.Controllers
 {
@@ -25,7 +26,13 @@ namespace OrderService.Controllers
         public async Task<IActionResult> Create(CreateOrderDto dto)
         {
             var result = await _service.CreateOrderAsync(dto);
-            return Ok(result);
+            return Ok(new ApiResponse<OrderResponseDto>
+            {
+                Success = true,
+                StatusCode = StatusCodes.Status200OK,
+                Message = "Order created successfully",
+                Data = result
+            });
         }
 
         [HttpGet]

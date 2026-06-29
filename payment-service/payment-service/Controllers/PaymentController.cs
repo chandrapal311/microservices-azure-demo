@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using payment_service.Services;
 using Shared.Contracts;
+using Shared.Contracts.Responses;
 
 namespace payment_service.Controllers
 {
@@ -24,7 +25,13 @@ namespace payment_service.Controllers
         public async Task<IActionResult> Process([FromBody] OrderCreatedEvent order)
         {
             var result = await _service.ProcessAsync(order);
-            return Ok(result);
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                StatusCode = 200,
+                Message = "Payment successful",
+                Data = result
+            });
         }
 
         [HttpPost("refund")]
@@ -32,7 +39,14 @@ namespace payment_service.Controllers
         public async Task<IActionResult> Refund([FromBody] OrderCreatedEvent order)
         {
             var result = await _service.RefundAsync(order);
-            return Ok(result);
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                StatusCode = 200,
+                Message = "Payment successful",
+                Data = result
+            });
+           
         }
     }
 }

@@ -25,11 +25,20 @@ builder.Services.AddSingleton(sp =>
     var config = sp.GetRequiredService<IConfiguration>();
     return new ServiceBusClient(config["ServiceBusConnection"]);
 });
-builder.Services.AddSingleton<AuthenticatedApiClient>();
+
 builder.Services.AddSingleton<TokenProvider>();
 
 builder.Services
     .AddRestEaseClient<IAuthApi>("https://localhost:7001/");
+
+builder.Services
+    .AddRestEaseClient<IPaymentApi>("https://localhost:7076/");
+
+builder.Services
+    .AddRestEaseClient<IInventoryApi>("https://localhost:7177/");
+
+builder.Services
+    .AddRestEaseClient<IOrderApi>("https://localhost:7083/");
 
 var retryPolicy = HttpPolicyExtensions
     .HandleTransientHttpError()

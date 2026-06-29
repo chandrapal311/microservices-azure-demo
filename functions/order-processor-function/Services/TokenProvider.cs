@@ -36,6 +36,11 @@ namespace order_processor_function.Services
         //    return response.Token;
         //}
 
+        public async Task<string> GetBearerTokenAsync()
+        {
+            return $"Bearer {await GetTokenAsync()}";
+        }
+
         public async Task<string> GetTokenAsync()
         {
             if (!string.IsNullOrEmpty(_cachedToken)

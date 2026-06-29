@@ -34,6 +34,7 @@ namespace auth_service.Controllers
                 user.Username,
                 user.Role);
 
+
             return Ok(token);
         }
     }
